@@ -18,7 +18,7 @@
         left : 0
     };
     const width = 250 - margin.left - margin.right;
-    const height = 200 - margin.top - margin.bottom;
+    const height = 150 - margin.top - margin.bottom;
     const innerRadius = 6;
     const outerRadius = 8;
     const year = "2015";
@@ -109,9 +109,10 @@
                     rotate(${((x(d.Month) + x.bandwidth() / 2) * 180 / Math.PI - 90)})
                     translate(${y(d.Count) + 10},0)`)
                 .append("text")
-                .text(d => d.Month)
+                .text(d => d.Month.slice(0, 3))
                 .attr("transform", d => (x(d.Month) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "rotate(180)" : "rotate(0)")
-                .style("font-size", "10px")
+                .style("font-size", "8px")
+                .attr("font-family", "Arial")
                 .attr("alignment-baseline", "middle");
 
             // values
@@ -127,8 +128,16 @@
                 .append("text")
                 .text(d => d.Count)
                 .attr("transform", d => (x(d.Month) + x.bandwidth() / 2 + Math.PI) % (2 * Math.PI) < Math.PI ? "rotate(180)" : "rotate(0)")
+                .attr('font-family', 'Arial')
                 .style("font-size", "6px")
                 .attr("alignment-baseline", "middle");
+            svg.append("text")
+                .attr("class", "title")
+                .attr("text-anchor", "end")
+                .text("Monthly shootings in " + year)
+                .style("font-size", "10px")
+                .attr("font-family", "Arial")
+                .attr("transform", "translate(" + 0.2*width + "," + -85 + ")");
         })
     }
 
@@ -147,15 +156,16 @@
     var svg = d3.select("#circular_bar")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
+        .attr("height", height + 100 + margin.top + margin.bottom)
         .append("g")
-        .attr("transform", "translate(" + (width / 2 + margin.left) + "," + (height / 4.5 + margin.top) + ")");
+        .attr("transform", "translate(" + (margin.left+0.35*width) + "," + margin.top + ")");
 
     draw("2015");
 
     dropDown.on("change", () => {
         var selected = d3.select("select").node().value;
         svg.selectAll("g").remove();
+        svg.selectAll("text").remove();
         draw(selected);
     });
 

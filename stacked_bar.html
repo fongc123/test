@@ -12,8 +12,8 @@
 
 <script>
     var margin = {top: 10, right: 30, bottom: 20, left: 50},
-        width = 325 - margin.left - margin.right,
-        height = 200 - margin.top - margin.bottom;
+        width = 250 - margin.left - margin.right,
+        height = 175 - margin.top - margin.bottom;
     const innerRadius = 70;
     const outerRadius = 75;
     const year = "2015";
@@ -55,9 +55,11 @@
                 .padding([0.2])
             svg.append("g")
                 .attr("transform", "translate(0," + height + ")")
-                .call(d3.axisBottom(x).tickFormat((d, i) => months[i].slice(0, 3)).tickSizeOuter(0));
+                .call(d3.axisBottom(x).tickFormat((d, i) => months[i].slice(0, 3)).tickSizeOuter(0))
+                .selectAll(".tick text")
+                .attr("font-size", "6px");
             var y = d3.scaleLinear().domain([0, 100]).range([ height, 0 ]);
-            svg.append("g").call(d3.axisLeft(y));
+            svg.append("g").call(d3.axisLeft(y)).selectAll(".tick text").attr("font-size", "6px");
             // var color = d3.scaleOrdinal()
             //     .domain(subgroups)
             //     .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"])
@@ -80,44 +82,45 @@
                 .attr("class", "title")
                 .attr("text-anchor", "end")
                 .text("Monthly shootings by race in " + year)
-                .style("font-size", "12px")
+                .style("font-size", "8px")
                 .attr("font-family", "Arial")
-                .attr("transform", "translate(" + 0.9*width + ", 0)");
+                .attr("transform", "translate(" + 0.85*width + ", 0)");
             svg.append("text")
                 .attr("class", "xlabel")
                 .attr("text-anchor", "end")
-                .attr("x", 0.6 * width)
-                .attr("y", 1.2 * height)
+                .attr("x", 0.55 * width)
+                .attr("y", 1.17 * height)
                 .text("Months")
-                .style("font-size", "10px")
+                .style("font-size", "6px")
                 .attr("font-family", "Arial");
             svg.append("text")
                 .attr("class", "ylabel")
                 .attr("text-anchor", "end")
                 .attr("x", 20)
-                .attr("y", 0.6 * height)
+                .attr("y", 0.57 * height)
                 .text("No. of Shootings")
-                .style("font-size", "10px")
+                .style("font-size", "6px")
                 .attr("font-family", "Arial")
-                .attr("transform", "translate(65, 105) rotate(90)");
+                .attr("transform", "translate(" + (margin.left+0.03*width) + "," + (margin.top + 0.45*height) + "" + ") rotate(90)");
+            var labelSize = 5;
             svg.selectAll("squares")
                 .data(subgroups)
                 .enter().append("rect")
                 .attr("x", 1.05*width)
-                .attr("y", (d, i) => { return margin.top+i*(10) })
-                .attr("width", 5)
-                .attr("height", 5)
+                .attr("y", (d, i) => { return margin.top+i*(2*labelSize) })
+                .attr("width", labelSize)
+                .attr("height", labelSize)
                 .style("fill", d => color(d))
             svg.selectAll("labels")
                 .data(subgroups)
                 .enter().append("text")
-                .attr("x", 1.05*width+2.2*5)
-                .attr("y", (d, i) => { return 11+i*(10)+2.5})
+                .attr("x", 1.05*width+2*labelSize)
+                .attr("y", (d, i) => { return 1.3*margin.top+i*(2*labelSize) })
                 .style("fill", d => color(d))
                 .text(d => d)
                 .attr("text-anchor", "middle")
                 .style("alignment-baseline", "middle")
-                .attr("font-size", "10px")
+                .attr("font-size", "6px")
         });
     };
 
