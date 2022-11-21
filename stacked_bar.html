@@ -3,14 +3,16 @@
 
 <script src="https://d3js.org/d3.v4.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3-scale-radial.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/1.7.0/d3-legend.min.js"></script>
 <script src="https://momentjs.com/downloads/moment.js"></script>
 <a href = "circular_bar.html">See <b>radial plot</b>.</a>
 <div id = "filter"><b>Year:</b></div>
 <div id="stacked_radial"></div>
+<div class = "legend"></div>
 
 <script>
     var margin = {top: 10, right: 30, bottom: 20, left: 50},
-        width = 250 - margin.left - margin.right,
+        width = 325 - margin.left - margin.right,
         height = 200 - margin.top - margin.bottom;
     const innerRadius = 70;
     const outerRadius = 75;
@@ -45,18 +47,21 @@
         d3.csv(link, data => {
             var subgroups = data.columns.slice(2)
             var groups = d3.map(data, function(d){return(d.shot_month)}).keys()
+            console.log(subgroups);
+            console.log(groups);
             var x = d3.scaleBand()
                 .domain(groups)
                 .range([0, width])
                 .padding([0.2])
             svg.append("g")
                 .attr("transform", "translate(0," + height + ")")
-                .call(d3.axisBottom(x).tickSizeOuter(0));
+                .call(d3.axisBottom(x).tickFormat((d, i) => months[i].slice(0, 3)).tickSizeOuter(0));
             var y = d3.scaleLinear().domain([0, 100]).range([ height, 0 ]);
             svg.append("g").call(d3.axisLeft(y));
-            var color = d3.scaleOrdinal()
-                .domain(subgroups)
-                .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"])
+            // var color = d3.scaleOrdinal()
+            //     .domain(subgroups)
+            //     .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"])
+            var color = d3.scaleOrdinal().domain(groups).range(d3.schemeCategory10);
             var stackedData = d3.stack().keys(subgroups)(data.filter(d => d.shot_year === year))
             svg.append("g")
                 .selectAll("g")
@@ -71,6 +76,48 @@
                     .attr("height", function(d) { return y(d[0]) - y(d[1]); })
                     .attr("width",x.bandwidth()
                 );
+            svg.append("text")
+                .attr("class", "title")
+                .attr("text-anchor", "end")
+                .text("Monthly shootings by race in " + year)
+                .style("font-size", "12px")
+                .attr("font-family", "Arial")
+                .attr("transform", "translate(" + 0.9*width + ", 0)");
+            svg.append("text")
+                .attr("class", "xlabel")
+                .attr("text-anchor", "end")
+                .attr("x", 0.6 * width)
+                .attr("y", 1.2 * height)
+                .text("Months")
+                .style("font-size", "10px")
+                .attr("font-family", "Arial");
+            svg.append("text")
+                .attr("class", "ylabel")
+                .attr("text-anchor", "end")
+                .attr("x", 20)
+                .attr("y", 0.6 * height)
+                .text("No. of Shootings")
+                .style("font-size", "10px")
+                .attr("font-family", "Arial")
+                .attr("transform", "translate(65, 105) rotate(90)");
+            svg.selectAll("squares")
+                .data(subgroups)
+                .enter().append("rect")
+                .attr("x", 1.05*width)
+                .attr("y", (d, i) => { return margin.top+i*(10) })
+                .attr("width", 5)
+                .attr("height", 5)
+                .style("fill", d => color(d))
+            svg.selectAll("labels")
+                .data(subgroups)
+                .enter().append("text")
+                .attr("x", 1.05*width+2.2*5)
+                .attr("y", (d, i) => { return 11+i*(10)+2.5})
+                .style("fill", d => color(d))
+                .text(d => d)
+                .attr("text-anchor", "middle")
+                .style("alignment-baseline", "middle")
+                .attr("font-size", "10px")
         });
     };
 
@@ -87,16 +134,18 @@
 
         var svg = d3.select("#stacked_radial")
             .append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
+                .attr("width", width + 100 + margin.left + margin.right)
+                .attr("height", height + 100 + margin.top + margin.bottom)
             .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                .attr("transform", "translate(" + margin.left + "," + 1.8*margin.top + ")");
 
     draw(link, "2015");
 
     dropDown.on("change", function() {
         var selectedOption = d3.select(this).property("value");
         svg.selectAll("g").remove();
+        svg.selectAll("text").remove();
+        svg.selectAll("rect").remove();
         draw(link, selectedOption);
     });
 
