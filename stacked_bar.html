@@ -5,18 +5,18 @@
 <script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3-scale-radial.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/1.7.0/d3-legend.min.js"></script>
 <script src="https://momentjs.com/downloads/moment.js"></script>
-<a href = "circular_bar.html">See <b>radial plot</b>.</a>
-<div id = "filter"><b>Year:</b></div>
-<div id="stacked_radial"></div>
-<div class = "legend"></div>
+<div id="filter"><b>Year:</b></div>
+<div id="stacked_bar"></div>
 
 <script>
-    var margin = {top: 10, right: 30, bottom: 20, left: 50},
-        width = 250 - margin.left - margin.right,
-        height = 175 - margin.top - margin.bottom;
-    const innerRadius = 70;
-    const outerRadius = 75;
-    const year = "2015";
+    const margin = {
+        top : 20,
+        right : 5,
+        bottom : 25,
+        left : 25
+    };
+    const width = 150;
+    const height = 160;
     const months = [
         "January",
         "February",
@@ -30,103 +30,97 @@
         "October",
         "November",
         "December"
-    ]
+    ];
+    const races = {
+        "A" : "Asian",
+        "B" : "Black",
+        "H" : "Hispanic",
+        "N" : "Native American",
+        "W" : "White",
+        "O" : "Other"
+    };
+
     const link = "https://raw.githubusercontent.com/DelusionArun/Testing_CSV/main/race_by_year_month.csv"
-    // const link = "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/data_stacked.csv";
-
-    // functions to convert from date to month
-    function getYear(date) {
-        return moment(date, "YYYY-MM-DD").format("YYYY");
-    }
-
-    function getMonth(date) {
-        return moment(date, "YYYY-MM-DD").format("MMMM");
-    }
 
     function draw(link, year = "2015") {
         d3.csv(link, data => {
-            var subgroups = data.columns.slice(2)
-            var groups = d3.map(data, function(d){return(d.shot_month)}).keys()
-            console.log(subgroups);
-            console.log(groups);
+            var subgroups = data.columns.slice(2);
+            var groups = d3.map(data, function (d) { return d.shot_month }).keys().map(d => d-1)
+
+            var total = [];
+            data.forEach(function (e) {
+                var sum = 0;
+                for (var i = 2; i < subgroups.length + 2; i++) {
+                    sum += +e[subgroups[i - 2]];
+                }
+                total.push(sum);
+            });
             var x = d3.scaleBand()
                 .domain(groups)
-                .range([0, width])
-                .padding([0.2])
+                .range([0, width-margin.left-margin.right])
+                .padding([0.2]);
+            var y = d3.scaleLinear()
+                .domain([0, Math.max(...total)])
+                .range([height-margin.top-margin.bottom, 0]);
+            var color = d3.scaleOrdinal()
+                .domain(subgroups)
+                .range(["#ffdf00", "#7b4b2a", "#ffa700", "#aa0000", "#ffaa00", "#fbddcf"])
+            var stack = d3.stack().keys(subgroups)(data.filter(d => d.shot_year === year));
+
             svg.append("g")
-                .attr("transform", "translate(0," + height + ")")
+                .attr("transform", `translate(${margin.left}, ${height-margin.bottom})`)
                 .call(d3.axisBottom(x).tickFormat((d, i) => months[i].slice(0, 3)).tickSizeOuter(0))
                 .selectAll(".tick text")
-                .attr("font-size", "6px");
-            var y = d3.scaleLinear().domain([0, 100]).range([ height, 0 ]);
-            svg.append("g").call(d3.axisLeft(y)).selectAll(".tick text").attr("font-size", "6px");
-            // var color = d3.scaleOrdinal()
-            //     .domain(subgroups)
-            //     .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"])
-            var color = d3.scaleOrdinal().domain(groups).range(d3.schemeCategory10);
-            var stackedData = d3.stack().keys(subgroups)(data.filter(d => d.shot_year === year))
+                .attr("font-size", "5px");
+            svg.append("g")
+                .attr("transform", `translate(${margin.left}, ${margin.top})`)
+                .call(d3.axisLeft(y).tickSizeOuter(0))
+                .selectAll(".tick text")
+                .attr("font-size", "5px");
             svg.append("g")
                 .selectAll("g")
-                .data(stackedData)
-                .enter().append("g")
-                .attr("fill", function(d) { return color(d.key); })
+                .data(stack).enter()
+                .append("g")
+                .attr("fill", function (d) { return color(d.key); })
                 .selectAll("rect")
-                .data(function(d) { return d; })
-                .enter().append("rect")
-                    .attr("x", function(d) { return x(d.data.shot_month); })
-                    .attr("y", function(d) { return y(d[1]); })
-                    .attr("height", function(d) { return y(d[0]) - y(d[1]); })
-                    .attr("width",x.bandwidth()
+                .data(function (d) { return d; }).enter()
+                .append("rect")
+                    .attr("x", function (d) { return margin.left+x(d.data.shot_month-1); })
+                    .attr("y", function (d) { return margin.top+y(d[1]); })
+                    .attr("height", function (d) { return y(d[0]) - y(d[1]); })
+                    .attr("width", x.bandwidth()
                 );
             svg.append("text")
+                .text(`Monthly shootings by race in ${year}`)
                 .attr("class", "title")
-                .attr("text-anchor", "end")
-                .text("Monthly shootings by race in " + year)
+                .attr("text-anchor", "middle")
+                .attr("x", 0.5*width)
+                .attr("y", 0.7*margin.top)
                 .style("font-size", "8px")
-                .attr("font-family", "Arial")
-                .attr("transform", "translate(" + 0.85*width + ", 0)");
+                .attr("font-family", "Arial");
             svg.append("text")
                 .attr("class", "xlabel")
-                .attr("text-anchor", "end")
-                .attr("x", 0.55 * width)
-                .attr("y", 1.17 * height)
+                .attr("text-anchor", "middle")
+                .attr("x", 0.5*(width+margin.left))
+                .attr("y", height-0.1*margin.bottom)
                 .text("Months")
-                .style("font-size", "6px")
+                .style("font-size", "5px")
                 .attr("font-family", "Arial");
             svg.append("text")
                 .attr("class", "ylabel")
-                .attr("text-anchor", "end")
-                .attr("x", 20)
-                .attr("y", 0.57 * height)
-                .text("No. of Shootings")
-                .style("font-size", "6px")
-                .attr("font-family", "Arial")
-                .attr("transform", "translate(" + (margin.left+0.03*width) + "," + (margin.top + 0.45*height) + "" + ") rotate(90)");
-            var labelSize = 5;
-            svg.selectAll("squares")
-                .data(subgroups)
-                .enter().append("rect")
-                .attr("x", 1.05*width)
-                .attr("y", (d, i) => { return margin.top+i*(2*labelSize) })
-                .attr("width", labelSize)
-                .attr("height", labelSize)
-                .style("fill", d => color(d))
-            svg.selectAll("labels")
-                .data(subgroups)
-                .enter().append("text")
-                .attr("x", 1.05*width+2*labelSize)
-                .attr("y", (d, i) => { return 1.3*margin.top+i*(2*labelSize) })
-                .style("fill", d => color(d))
-                .text(d => d)
                 .attr("text-anchor", "middle")
-                .style("alignment-baseline", "middle")
-                .attr("font-size", "6px")
+                .attr("x", 0.5*height-0.25*margin.top)
+                .attr("y", -0.1*margin.left)
+                .text("Number of Shootings")
+                .style("font-size", "5px")
+                .attr("font-family", "Arial")
+                .attr("transform", "rotate(90)");
         });
     };
 
     var dropDown = d3.select("#filter")
         .append("select")
-        .attr("name", "year-list")
+        .attr("name", "year-list");
 
     var options = dropDown.selectAll("option")
         .data(d3.range(2015, 2023))
@@ -135,21 +129,46 @@
         .text(d => d)
         .attr("value", d => d);
 
-        var svg = d3.select("#stacked_radial")
-            .append("svg")
-                .attr("width", width + 100 + margin.left + margin.right)
-                .attr("height", height + 100 + margin.top + margin.bottom)
-            .append("g")
-                .attr("transform", "translate(" + margin.left + "," + 1.8*margin.top + ")");
+    var svg = d3.select("#stacked_bar")
+        .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+
+    var subgroups = ["A", "B", "H", "N", "O", "W"];
+    var color = d3.scaleOrdinal()
+        .domain(subgroups)
+        .range(["#ffdf00", "#7b4b2a", "#ffa700", "#aa0000", "#ffaa00", "#fbddcf"])
+    var legend = d3.select("#stacked_bar")
+        .append("svg")
+            .attr("width", 0.3*width)
+            .attr("height", height)
+    legend.selectAll("squares")
+        .data(subgroups)
+        .enter().append("rect")
+        .attr("x", 0)
+        .attr("y", function (d, i) { return 10 + i * 10 })
+        .attr("width", 5)
+        .attr("height", 5)
+        .style("fill", function (d) { return color(d) })
+    legend.selectAll("labels")
+        .data(subgroups)
+        .enter().append("text")
+        .attr("x", 0.25*margin.left)
+        .attr("y", function (d, i) { return 13 + i * 10 })
+        .text(d => races[d])
+        .attr("text-anchor", "left")
+        .style("alignment-baseline", "middle")
+        .style("font-size", "5px")
+        .attr("font-family", "Arial");
 
     draw(link, "2015");
 
-    dropDown.on("change", function() {
-        var selectedOption = d3.select(this).property("value");
+    dropDown.on("change", function () {
+        var selected = d3.select(this).property("value");
         svg.selectAll("g").remove();
         svg.selectAll("text").remove();
         svg.selectAll("rect").remove();
-        draw(link, selectedOption);
-    });
+        draw(link, selected);
+    })
 
 </script>

@@ -4,7 +4,6 @@
 <script src="https://d3js.org/d3.v4.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/d3-scale-radial.js"></script>
 <script src="https://momentjs.com/downloads/moment.js"></script>
-<a href = "stacked_bar.html">See <b>stacked bar plot</b>.</a>
 <div id = "filter">
     <b>Year:</b>
 </div>
@@ -17,8 +16,8 @@
         bottom : 0,
         left : 0
     };
-    const width = 250 - margin.left - margin.right;
-    const height = 150 - margin.top - margin.bottom;
+    const width = 225 - margin.left - margin.right;
+    const height = 100 - margin.top - margin.bottom;
     const innerRadius = 6;
     const outerRadius = 8;
     const year = "2015";
@@ -89,6 +88,7 @@
                 .enter()
                 .append("path")
                 .attr("fill", "#69b3a2")
+                .attr("x", 100)
                 .attr("d", d3.arc()
                     .innerRadius(innerRadius)
                     .outerRadius(d => y(d.Count))
@@ -137,7 +137,7 @@
                 .text("Monthly shootings in " + year)
                 .style("font-size", "10px")
                 .attr("font-family", "Arial")
-                .attr("transform", "translate(" + 0.2*width + "," + -85 + ")");
+                .attr("transform", "translate(" + 0.25*width + "," + -85 + ")");
         })
     }
 
